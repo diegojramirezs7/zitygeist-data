@@ -2,3 +2,9 @@
 
 This repo will be used for data exploration regarding city/country/regional value trends, interestes, demographics, socio economic indicators, etc. 
 
+Possible sources: 
+- U of T school of city datasets
+- General Social Survey (gov of canada)
+- world values survey
+- Google trends API
+- Music Trends
