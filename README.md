@@ -5,6 +5,6 @@ This repo will be used for data exploration regarding city/country/regional valu
 Possible sources: 
 - U of T school of city datasets
 - General Social Survey (gov of canada)
-- world values survey
+- world values survey / European social survey
 - Google trends API
 - Music Trends
