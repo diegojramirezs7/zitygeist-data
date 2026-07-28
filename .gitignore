@@ -1,2 +1,5 @@
 .ipynb_checkpoints/
 tokens.json
+docs/
+*dataset.csv
+*.DS_Store
