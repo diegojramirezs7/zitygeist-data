@@ -49,3 +49,6 @@ snapshots and leave the longitudinal assembly to the user.
 In future sessions I'll ask about **specific use cases of a given source** (e.g. how to
 pull a particular signal, how to join two sources, what a given API can/can't do). This
 file exists so Claude has the project goal and source landscape as context.
+
+## Possible UX
+Use the same idea of map layers to add insights on top of each other and see how different things tie together. 

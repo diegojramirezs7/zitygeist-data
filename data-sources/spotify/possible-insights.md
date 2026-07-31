@@ -1,0 +1,13 @@
+- very specific location (city): can get top tracks for that week for that city.
+- can show how music interest changes over time in a specific location (same location trends over time)
+- how it changes across different locations (same time different locations)
+    - locations that are very similar (based on similar songs) — create clusters of cities that have very similar taste or compare cities that are very different
+    - similar right now — similar at different points? divergence/coming together
+- location that you would expect to be similar but aren’t
+- patterns of popular songs?
+    - what kind of songs hit in particular cities?
+    - what kind of songs are more global?
+    - what kind of songs only hit in a particular type of city?
+    - would need some data augmentation, but it’s ok.
+- moods over particular time?
+    - connected to geopolitical events, economic conditions, seasonal, etc?
