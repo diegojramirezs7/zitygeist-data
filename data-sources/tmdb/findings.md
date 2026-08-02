@@ -10,7 +10,8 @@ What we've *learned* (vs. `possible-insights.md`, which is what we hope). Fill i
 - **Local capture complete (Aug 2 2026)**: full 121-day window (2026-04-04 → 2026-08-02), 3 types × 121 days, 12GB in `data/raw/tmdb/exports/`. From here forward only the daily pull matters.
 - Collector: `scripts/fetch_tmdb_exports.py` (stdlib-only, idempotent, atomic writes) → `data/raw/tmdb/exports/<YYYY-MM-DD>/{type}.json.gz`. Default types: movie_ids, tv_series_ids, person_ids.
 - Sizes per day: movies 26MB gz / 1.23M lines, people 71MB / 4.85M, TV 4.7MB / 228K → **~102MB/day, ~9GB per 90-day window**.
-- TODO: move daily run to GitHub Action + S3 upload.
+- **Daily pull automated (Aug 2 2026)**: `.github/workflows/tmdb-daily-export.yml`, cron 09:30 UTC (after TMDB's publish), `--backfill 2` for self-healing against a missed run, syncs to `s3://zitygeist-data-373286627077-ca-west-1-an/tmdb/exports/` (region ca-west-1). IAM user scoped to PutObject/GetObject/ListBucket on this bucket only. Full 121-day local backfill seeded to the same S3 prefix the same day.
+- S3 is now the durable copy of record; local `data/raw/tmdb/exports/` stays as the working copy for notebooks.
 
 ## Schema & quirks
 <!-- native shape, junk patterns, gotchas found on real data -->

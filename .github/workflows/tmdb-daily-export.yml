@@ -1,0 +1,45 @@
+name: TMDB daily export fetch
+
+on:
+  schedule:
+    # 09:30 UTC — after TMDB's ~08:00 UTC daily publish, with a buffer
+    - cron: "30 9 * * *"
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "Days to fetch, ending today"
+        default: "2"
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Fetch TMDB exports
+        run: python scripts/fetch_tmdb_exports.py --backfill "${{ github.event.inputs.backfill || '2' }}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-west-1
+
+      - name: Sync to S3
+        # Sync per date folder, not the whole tmdb/exports prefix — otherwise every
+        # run lists the entire (ever-growing) archive just to upload the 1-2 days
+        # this run actually fetched.
+        run: |
+          set -e
+          for day_dir in data/raw/tmdb/exports/*/; do
+            day="$(basename "$day_dir")"
+            aws s3 sync "$day_dir" "s3://zitygeist-data-373286627077-ca-west-1-an/tmdb/exports/$day" --only-show-errors
+          done
