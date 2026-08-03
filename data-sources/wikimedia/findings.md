@@ -4,6 +4,9 @@ What we've *learned* (vs. `possible-insights.md`, which is what we hope). Fill i
 
 ## Fetch recipe
 <!-- endpoints, auth, rate limits, cadence, backfill depth -->
+- **Per-article pageviews backfill**: `per-article` endpoint takes a date *range*, not one call per day — a full 12-month pull for one article is a single HTTP request. Tested `Donald_Trump`/`en.wikipedia`, 2025-08-01→2026-08-01: 366 datapoints, one request, no rate limiting hit at all (unlike `action=query`, which we've 429'd on repeatedly — the two endpoints have very different limits).
+- **Recommended backfill depth for this phase: ~12 months.** Long enough to see a full seasonal cycle and compute a real rolling baseline; the API's actual ceiling is ~July 2015 (when the current pageviews definition started), so full history is possible later if needed — no urgency since (unlike TMDB) old pageview data isn't disappearing.
+- Real signal in the 12-month Trump pull: baseline ~40–60K views/day, spiking to **738K on 2026-01-12** (~15x baseline, tapering over following days) — exactly the kind of deviation-from-baseline signal the project wants.
 
 ## Schema & quirks
 <!-- native shape, junk patterns, gotchas found on real data -->

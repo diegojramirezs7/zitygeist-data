@@ -60,7 +60,9 @@ def _resolve_batch(project: str, titles: list[str]) -> dict[str, str | None]:
         r.raise_for_status()
         break
     else:
-        raise RuntimeError(f"Q-id resolution for {project} still rate-limited after retries")
+        raise RuntimeError(
+            f"Q-id resolution for {project} still rate-limited after retries"
+        )
 
     q = r.json()["query"]
 
@@ -68,14 +70,20 @@ def _resolve_batch(project: str, titles: list[str]) -> dict[str, str | None]:
     # key the final result by what was actually asked for
     resolved_title = {t: t for t in titles}
     for n in q.get("normalized", []):
-        resolved_title = {t: (n["to"] if v == n["from"] else v) for t, v in resolved_title.items()}
+        resolved_title = {
+            t: (n["to"] if v == n["from"] else v) for t, v in resolved_title.items()
+        }
     for rd in q.get("redirects", []):
-        resolved_title = {t: (rd["to"] if v == rd["from"] else v) for t, v in resolved_title.items()}
+        resolved_title = {
+            t: (rd["to"] if v == rd["from"] else v) for t, v in resolved_title.items()
+        }
 
     qid_by_final_title: dict[str, str | None] = {}
     for page in q["pages"].values():
         if "missing" in page:
             continue
-        qid_by_final_title[page["title"]] = page.get("pageprops", {}).get("wikibase_item")
+        qid_by_final_title[page["title"]] = page.get("pageprops", {}).get(
+            "wikibase_item"
+        )
 
     return {t: qid_by_final_title.get(final) for t, final in resolved_title.items()}
