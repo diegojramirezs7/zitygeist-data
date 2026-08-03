@@ -12,16 +12,20 @@ import json
 import time
 from pathlib import Path
 
-import requests
-
-USER_AGENT = "zitygeist-exploration (personal project)"
+from wikimedia_http import get
 
 # Namespace names essentially never change, so this is cached to disk, not just
 # in-memory — a fresh kernel/session shouldn't have to re-hit action=query (which
 # rate-limits much tighter than the pageviews REST API) for projects we've
 # already seen before. A single country's top list can touch 60+ distinct
 # projects, so a cold cache means dozens of first-time network calls.
-_CACHE_PATH = Path(__file__).resolve().parent.parent / "data" / "raw" / "wikimedia" / "siteinfo_cache.json"
+_CACHE_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "data"
+    / "raw"
+    / "wikimedia"
+    / "siteinfo_cache.json"
+)
 
 
 def _load_cache() -> dict:
@@ -29,13 +33,17 @@ def _load_cache() -> dict:
         return {}
     with open(_CACHE_PATH) as f:
         raw = json.load(f)
-    return {p: {"mainpage": v["mainpage"], "namespaces": set(v["namespaces"])} for p, v in raw.items()}
+    return {
+        p: {"mainpage": v["mainpage"], "namespaces": set(v["namespaces"])}
+        for p, v in raw.items()
+    }
 
 
 def _save_cache(cache: dict) -> None:
     _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     serializable = {
-        p: {"mainpage": v["mainpage"], "namespaces": sorted(v["namespaces"])} for p, v in cache.items()
+        p: {"mainpage": v["mainpage"], "namespaces": sorted(v["namespaces"])}
+        for p, v in cache.items()
     }
     with open(_CACHE_PATH, "w") as f:
         json.dump(serializable, f, indent=2, ensure_ascii=False)
@@ -50,7 +58,7 @@ def fetch_siteinfo(project: str) -> dict:
         return _siteinfo_cache[project]
 
     for attempt in range(4):
-        r = requests.get(
+        r = get(
             f"https://{project}.org/w/api.php",
             params={
                 "action": "query",
@@ -58,7 +66,6 @@ def fetch_siteinfo(project: str) -> dict:
                 "siprop": "general|namespaces",
                 "format": "json",
             },
-            headers={"User-Agent": USER_AGENT},
         )
         if r.status_code == 429:
             time.sleep(int(r.headers.get("Retry-After", 2**attempt)))

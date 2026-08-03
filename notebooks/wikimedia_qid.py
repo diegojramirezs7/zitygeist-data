@@ -11,9 +11,7 @@ See data-sources/wikimedia/findings.md.
 
 import time
 
-import requests
-
-USER_AGENT = "zitygeist-exploration (personal project)"
+from wikimedia_http import get
 
 # MediaWiki's action=query allows up to 50 titles per request (anonymous) —
 # batching matters here: this endpoint rate-limits much tighter than the
@@ -42,7 +40,7 @@ def resolve_qid(project: str, title: str) -> str | None:
 
 def _resolve_batch(project: str, titles: list[str]) -> dict[str, str | None]:
     for attempt in range(4):
-        r = requests.get(
+        r = get(
             f"https://{project}.org/w/api.php",
             params={
                 "action": "query",
@@ -52,7 +50,6 @@ def _resolve_batch(project: str, titles: list[str]) -> dict[str, str | None]:
                 "redirects": 1,
                 "format": "json",
             },
-            headers={"User-Agent": USER_AGENT},
         )
         if r.status_code == 429:
             time.sleep(int(r.headers.get("Retry-After", 2**attempt)))
