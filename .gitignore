@@ -5,3 +5,4 @@ docs/
 data/
 *dataset.csv
 *.DS_Store
+*/__pycache__/*
