@@ -26,7 +26,7 @@ _MAX_TITLES_PER_REQUEST = 50
 # wikimedia_noise's siteinfo cache — avoids re-resolving the same titles across
 # kernel restarts or repeated pipeline runs.
 _CACHE_PATH = (
-    Path(__file__).resolve().parent.parent
+    Path(__file__).resolve().parent.parent.parent
     / "data"
     / "raw"
     / "wikimedia"

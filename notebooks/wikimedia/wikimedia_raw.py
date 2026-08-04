@@ -10,7 +10,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 _ROOT = (
-    Path(__file__).resolve().parent.parent
+    Path(__file__).resolve().parent.parent.parent
     / "data"
     / "raw"
     / "wikimedia"

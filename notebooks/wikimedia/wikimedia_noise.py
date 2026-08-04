@@ -22,7 +22,7 @@ from wikimedia_http import get
 # already seen before. A single country's top list can touch 60+ distinct
 # projects, so a cold cache means dozens of first-time network calls.
 _CACHE_PATH = (
-    Path(__file__).resolve().parent.parent
+    Path(__file__).resolve().parent.parent.parent
     / "data"
     / "raw"
     / "wikimedia"
