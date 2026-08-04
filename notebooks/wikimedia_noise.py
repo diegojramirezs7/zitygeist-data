@@ -12,6 +12,8 @@ import json
 import time
 from pathlib import Path
 
+import requests
+
 from wikimedia_http import get
 
 # Namespace names essentially never change, so this is cached to disk, not just
@@ -57,6 +59,7 @@ def fetch_siteinfo(project: str) -> dict:
     if project in _siteinfo_cache:
         return _siteinfo_cache[project]
 
+    last_error = None
     for attempt in range(4):
         r = get(
             f"https://{project}.org/w/api.php",
@@ -70,7 +73,15 @@ def fetch_siteinfo(project: str) -> dict:
         if r.status_code == 429:
             time.sleep(int(r.headers.get("Retry-After", 2**attempt)))
             continue
-        r.raise_for_status()
+        try:
+            r.raise_for_status()
+        except requests.HTTPError as e:
+            # occasional transient edge-cache/rate-limit redirects under sustained
+            # load (e.g. mediawiki.org bouncing to a docs page instead of a clean
+            # error) — worth a backoff retry rather than failing the whole run.
+            last_error = e
+            time.sleep(2**attempt)
+            continue
         d = r.json()["query"]
         info = {
             "mainpage": d["general"]["mainpage"].replace(" ", "_"),
@@ -81,7 +92,9 @@ def fetch_siteinfo(project: str) -> dict:
         _siteinfo_cache[project] = info
         _save_cache(_siteinfo_cache)
         return info
-    raise RuntimeError(f"siteinfo for {project} still rate-limited after retries")
+    raise RuntimeError(
+        f"siteinfo for {project} still failing after retries: {last_error}"
+    )
 
 
 def is_noise(article: str, project: str) -> bool:

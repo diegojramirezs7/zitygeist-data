@@ -9,7 +9,9 @@ edition (or, eventually, GDELT/TMDB) you found it in.
 See data-sources/wikimedia/findings.md.
 """
 
+import json
 import time
+from pathlib import Path
 
 from wikimedia_http import get
 
@@ -19,18 +21,65 @@ from wikimedia_http import get
 # country's kept list can easily be 100-1000 titles.
 _MAX_TITLES_PER_REQUEST = 50
 
+# A title's Q-id essentially never changes, and the same titles recur heavily
+# across days/countries (65-84% day-to-day overlap), so cache to disk like
+# wikimedia_noise's siteinfo cache — avoids re-resolving the same titles across
+# kernel restarts or repeated pipeline runs.
+_CACHE_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "data"
+    / "raw"
+    / "wikimedia"
+    / "qid_cache.json"
+)
+
+
+def _cache_key(project: str, title: str) -> str:
+    return f"{project}::{title}"
+
+
+def _load_cache() -> dict[str, str | None]:
+    if not _CACHE_PATH.exists():
+        return {}
+    with open(_CACHE_PATH) as f:
+        return json.load(f)
+
+
+def _save_cache(cache: dict[str, str | None]) -> None:
+    _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(_CACHE_PATH, "w") as f:
+        json.dump(cache, f, indent=2, ensure_ascii=False)
+
+
+_qid_cache = _load_cache()
+
 
 def resolve_qids(project: str, titles: list[str]) -> dict[str, str | None]:
     """Resolve many titles on one project to Q-ids in as few requests as possible.
 
     Returns {title: qid_or_None}, keyed by the *original* title passed in even
     though MediaWiki may normalize or redirect it internally. Missing pages or
-    pages with no linked Wikidata item map to None.
+    pages with no linked Wikidata item map to None. Cached to disk, so already
+    -seen titles cost nothing.
     """
     results: dict[str, str | None] = {}
-    for i in range(0, len(titles), _MAX_TITLES_PER_REQUEST):
-        batch = titles[i : i + _MAX_TITLES_PER_REQUEST]
-        results.update(_resolve_batch(project, batch))
+    to_fetch = []
+    for title in titles:
+        key = _cache_key(project, title)
+        if key in _qid_cache:
+            results[title] = _qid_cache[key]
+        else:
+            to_fetch.append(title)
+
+    for i in range(0, len(to_fetch), _MAX_TITLES_PER_REQUEST):
+        batch = to_fetch[i : i + _MAX_TITLES_PER_REQUEST]
+        resolved = _resolve_batch(project, batch)
+        results.update(resolved)
+        for title, qid in resolved.items():
+            _qid_cache[_cache_key(project, title)] = qid
+    if to_fetch:
+        _save_cache(_qid_cache)
+
     return results
 
 
